@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Socket.IO chat</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				font: 13px Helvetica, Arial;
+			}
+			div {
+				background: #000;
+				padding: 3px;
+				position: fixed;
+				bottom: 0;
+				width: 100%;
+			}
+			div input {
+				border: 0;
+				padding: 10px;
+				width: 90%;
+				margin-right: .5%;
+				margin-top: 2px;
+			}
+			div button {
+				width: 9%;
+				background: rgb(130, 224, 255);
+				border: none;
+				padding: 10px;
+				margin-top: 2px;
+			}
+			#messages {
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			#messages li {
+				padding: 5px 10px;
+			}
+			#messages li:nth-child(odd) {
+				background: #eee;
+			}
+			#online-users {
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			#online-users li {
+				padding: 5px 10px;
+				background: lightgreen;
+			}
+			#error {
+				list-style-type: none;
+				margin: 0;
+				padding: 0;
+			}
+			#error li {
+				padding: 5px 10px;
+				background: #F54747;
+			}
+		</style>
+	</head>
+	<body>
+		<ul id="error"></ul>
+		<ul id="online-users"></ul>
+		<ul id="messages"></ul>
+		<div>
+			<input id="m_auth" autocomplete="off" placeholder="My Email" />
+			<button id="auth">
+				Authenticate
+			</button>
+			<input id="m" autocomplete="off" onkeypress="sendMessage(event)" />
+			<button id="send">
+				Send
+			</button>
+		</div>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+		<script>
+			var socket = io();
+
+			function sendMessage(e) {
+				if (e.which == 13) {
+					socket.emit('chat_message', $('#m').val());
+					$('#m').val('');
+				}
+			}
+
+			socket.on('chat_message', function(msg) {
+				$('#messages').append($('<li>').text(msg));
+			});
+			
+			socket.on('notify', function(msg) {
+				$('#error').append($('<li>').text(msg));
+			});
+			
+			socket.on('online-user-list', function(user_list) {
+				$('#online-users').html("");
+				for (var i = 0; i < user_list.length; i++) {
+					$('#online-users').append($('<li>').text(user_list[i][0]));
+				}
+			});
+			
+			$('button#auth').click(function() {
+				socket.emit('authenticate', { "email": $('#m_auth').val() });
+				$('#m_auth').val('');
+			});
+
+			$('button#send').click(function() {
+				socket.emit('chat_message', $('#m').val());
+				$('#m').val('');
+			});
+		</script>
+	</body>
+</html>
